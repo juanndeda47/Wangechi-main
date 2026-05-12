@@ -1,0 +1,1306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    
+    <meta name="theme-color" content="#004141">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <title>Prayer Hub</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&family=Playfair+Display:ital,wght@0,700;1,400&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-canvas: #f8f9fa;
+            --text-main: #2d3436;
+            --white: #ffffff;
+            --foundation-color: #004141; /* Teal */
+            --daily-color: #e67e22;     /* Orange */
+            --liturgy-color: #8e44ad;   /* Purple */
+            --devotion-color: #2980b9;  /* Blue */
+            --sidebar-width: 280px;
+        }
+
+        /* --- Touch & Mobile Optimizations --- */
+        * { 
+            box-sizing: border-box; 
+            -webkit-tap-highlight-color: transparent; 
+        }
+
+        body { 
+            font-family: 'Montserrat', sans-serif; 
+            background-color: var(--bg-canvas); 
+            color: var(--text-main); 
+            margin: 0; 
+            display: flex; 
+            height: 100vh; 
+            width: 100vw;
+            overflow: hidden; 
+        }
+        .center-me {
+    text-align: center;
+        }
+
+        /* --- SIDEBAR (Desktop) --- */
+        .sidebar { 
+            width: var(--sidebar-width); 
+            background-color: var(--white); 
+            border-right: 1px solid #dfe6e9; 
+            display: flex; 
+            flex-direction: column; 
+            overflow-y: auto; 
+            padding: 30px 20px; 
+            box-shadow: 4px 0 15px rgba(0,0,0,0.03); 
+            z-index: 10;
+        }
+
+        .sidebar-header { text-align: center; margin-bottom: 40px; border-bottom: 2px dashed #dfe6e9; padding-bottom: 20px; }
+        .sidebar-header h2 { font-family: 'Playfair Display', serif; color: #2c3e50; font-size: 1.5em; margin: 0; }
+        
+        .category { margin-bottom: 25px; }
+        .category-title { font-size: 0.75em; text-transform: uppercase; color: #b2bec3; letter-spacing: 2px; margin-bottom: 12px; font-weight: 600; }
+        
+        .menu-item { 
+            display: flex; 
+            align-items: center; 
+            padding: 12px 15px; 
+            cursor: pointer; 
+            color: #636e72; 
+            text-decoration: none; 
+            border-radius: 12px; 
+            font-weight: 500; 
+            transition: all 0.3s ease; 
+            margin-bottom: 5px; 
+        }
+        .menu-item i { margin-right: 15px; font-style: normal; font-size: 1.2em; }
+        .menu-item:hover { background-color: #f1f2f6; }
+
+        /* --- ACTIVE STATES --- */
+        .category[data-theme="foundation"] .menu-item.active { background-color: #e0f2f1; color: var(--foundation-color); box-shadow: 0 4px 10px rgba(0,65,65,0.1); }
+        .category[data-theme="daily"] .menu-item.active { background-color: #fff3e0; color: var(--daily-color); box-shadow: 0 4px 10px rgba(230,126,34,0.1); }
+        .category[data-theme="liturgy"] .menu-item.active { background-color: #f3e5f5; color: var(--liturgy-color); box-shadow: 0 4px 10px rgba(142,68,173,0.1); }
+        .category[data-theme="devotion"] .menu-item.active { background-color: #e3f2fd; color: var(--devotion-color); box-shadow: 0 4px 10px rgba(41,128,185,0.1); }
+
+        /* --- CONTENT AREA --- */
+        .main-content { 
+            flex: 1; 
+            padding: 60px; 
+            overflow-y: auto; 
+            scroll-behavior: smooth; 
+            -webkit-overflow-scrolling: touch; /* Momentum scrolling for iOS */
+        }
+        .prayer-section { display: none; opacity: 0; transform: translateY(20px); transition: all 0.5s ease; max-width: 850px; margin: 0 auto; }
+        .prayer-section.active { display: block; opacity: 1; transform: translateY(0); }
+
+        .section-title { font-family: 'Playfair Display', serif; font-size: 3.5em; margin-bottom: 40px; }
+        [id="welcome"] .section-title { color: var(--foundation-color); }
+        [id="mass"] .section-title { color: var(--liturgy-color); }
+        [id="daily"] .section-title { color: var(--daily-color); }
+        [id="rosary"] .section-title, [id="marian"] .section-title { color: var(--devotion-color); }
+        [id="emergency"] .section-title { color: #d63031; }
+
+        .content-blocks { padding: 5px; border-radius: 10px; margin-bottom: 30px; background: var(--white); box-shadow: 0 10px 30px rgba(0,0,0,0.04); border: 1px solid rgba(0,0,0,0.02); }
+        .content-block { padding: 40px; border-radius: 20px; margin-bottom: 30px; background: var(--white); box-shadow: 0 10px 30px rgba(0,0,0,0.04); border: 1px solid rgba(0,0,0,0.02); }
+        .block-title { font-size: 1.4em; margin-top: 0; margin-bottom: 20px; font-weight: 600; letter-spacing: -0.5px; }
+        .prayer-text { line-height: 2; font-family: 'Georgia', serif; font-size: 1.15em; color: #2d3436; }
+        .response { font-weight: 700; color: #c0392b; display: block; margin: 5px 0 15px 0; }
+        hr { border: 0; border-top: 1px solid #eee; margin: 20px 0; }
+
+        /* --- MOBILE ADAPTATION (Phones) --- */
+        @media (max-width: 850px) {
+            body { flex-direction: column; }
+            
+            .sidebar { 
+                width: 100%; 
+                height: auto; 
+                flex-direction: row; 
+                padding: 10px 15px; 
+                border-right: none; 
+                border-bottom: 1px solid #dfe6e9;
+                overflow-x: auto; /* Allow menu swiping on phone */
+                white-space: nowrap;
+                position: sticky;
+                top: 0;
+                scrollbar-width: none;
+            }
+            .sidebar::-webkit-scrollbar { display: none; }
+
+            .sidebar-header, .category-title { display: none; }
+            .category { margin-bottom: 0; display: flex; flex-direction: row; margin-right: 15px; }
+            
+            .menu-item { 
+                padding: 10px 15px; 
+                margin-right: 8px; 
+                font-size: 0.85em; 
+                background: #f1f2f6;
+                border-bottom: 3px solid transparent;
+                flex-shrink: 0;
+            }
+
+            /* Themed active states for Mobile Nav */
+            .category[data-theme="foundation"] .menu-item.active { border-bottom: 3px solid var(--foundation-color); }
+            .category[data-theme="daily"] .menu-item.active { border-bottom: 3px solid var(--daily-color); }
+            .category[data-theme="liturgy"] .menu-item.active { border-bottom: 3px solid var(--liturgy-color); }
+            .category[data-theme="devotion"] .menu-item.active { border-bottom: 3px solid var(--devotion-color); }
+
+            .main-content { padding: 30px 20px; padding-top: 20px; }
+            .section-title { font-size: 2.2em; margin-bottom: 20px; }
+            .content-block { padding: 25px; border-radius: 15px; }
+        }
+        /* The clickable header */
+        .accordion-header {
+            background-color: #f1f2f6;
+            color: var(--devotion-color);
+            cursor: pointer;
+            padding: 15px;
+            width: 100%;
+            text-align: left;
+            border: none;
+            outline: none;
+            transition: 0.4s;
+            border-radius: 8px;
+            margin-bottom: 5px;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .accordion-header:hover {
+            background-color: #e3f2fd;
+        }
+
+        /* The hidden panel */
+        .accordion-panel {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out; /* This creates the "slide" */
+            background-color: white;
+            margin-bottom: 10px;
+        }
+
+        .accordion-content {
+            padding: 20px;
+            border-left: 3px solid var(--devotion-color);
+            line-height: 1.8;
+        }
+
+        /* Styling for the specific mystery buttons */
+        .sub-accordion-header {
+            background-color: transparent;
+            color: var(--text-main);
+            cursor: pointer;
+            padding: 10px 0;
+            width: 100%;
+            text-align: left;
+            border: none;
+            border-bottom: 1px solid #eee;
+            font-size: 1em;
+            display: flex;
+            justify-content: space-between;
+            transition: 0.2s;
+        }
+
+        .sub-accordion-header:hover {
+            color: var(--devotion-color);
+        }
+
+        .sub-accordion-panel {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-in-out;
+        }
+
+        .sub-content {
+            padding: 10px 15px;
+            font-size: 0.95em;
+            color: #57606f;
+            font-style: italic;
+            background: #f9f9f9;
+            border-radius: 5px;
+            margin: 5px 0;
+        }
+
+        .litany-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr); /* 2 columns on laptop */
+            column-gap: 15px;
+            row-gap: 2px;
+            margin-top: 10px;
+        }
+
+        .litany-grid > div {
+            margin: 0;
+            padding: 1px 0; /* Tiny bit of padding for readability */
+        }
+
+        .litany-item {
+            background: #fdfdfd;         
+            font-size: 1.15em;
+            line-height: 2;
+            font-family: 'Georgia', serif;
+            color: #2d3436; 
+            margin-bottom: 0px;
+            padding-bottom: 0px;
+        }
+
+        .litany-item .response {
+            display: block; /* Puts "Pray for us" on its own line for a cleaner look */
+            font-size: 0.85em;
+            margin-top: 4px;
+            color: #c0392b;
+        }
+
+        /* --- Mobile Fix --- */
+        @media (max-width: 600px) {
+            .litany-grid {
+                grid-template-columns: 1fr; /* 1 column on phone */
+            }
+        }
+
+
+        .litany-row {
+            display: flex;         /* This puts the div and span on the same line */
+            align-items: center;   /* Keeps them vertically aligned */
+            gap: 8px;              /* Adds a small space between the title and response */
+            margin-bottom: 5px;    /* Space between the different titles */
+        }
+
+        .title {
+            margin: 0;
+            padding: 0;
+        }
+
+        .response-inline {
+            font-weight: 700;
+            color: #c0392b;
+            font-size: 0.9em;
+            font-style: italic;    /* Optional: helps distinguish the response */
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="sidebar">
+        <div class="sidebar-header">
+            <h2>Welcome Home</h2>
+            <p>From PCEA to Catholic</p>
+        </div>
+        
+        <div class="category" data-theme="foundation">
+            <!-- <div class="category-title">Orientation</div> -->
+            <a class="menu-item active" onclick="showContent('welcome')"><i>🏠</i> <span>Welcome</span></a>
+            <a class="menu-item" onclick="showContent('daily')"><i>🌅</i> <span>Daily Prayers</span></a>
+            <a class="menu-item" onclick="showContent('mass')"><i>🛐</i> <span>Holy Mass</span></a>
+            <a class="menu-item" onclick="showContent('rosary')"><i>📿</i> <span>Holy Rosary</span></a>
+            <a class="menu-item" onclick="showContent('marian')"><i>🌹</i> <span>Marian</span></a>
+            <a class="menu-item" onclick="showContent('emergency')"><i>🆘</i> <span>Arrow</span></a>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        
+        <section id="welcome" class="prayer-section active">
+            <h1 class="section-title">A New Architecture</h1>
+            <div class="content-block">
+                <h3 class="block-title">The Foundation Remains</h3>
+                <p class="prayer-text">In architecture, the foundation determines the height. Your PCEA upbringing was a strong foundation; now, the Catholic Church is the cathedral being built upon it.</p>
+            </div>
+        </section>
+
+        <section id="daily" class="prayer-section">
+               <!-- <div class="content-block" style="border-top: 4px solid var(--devotion-color); background: #f0f7ff;">
+                <h3 class="block-title">The Five Mysteries</h3>
+                
+            <button class="accordion-header prayer-text" onclick="toggleAccordion(this)">
+                Joyful Mysteries <i>(Monday, Saturday)</i><span>▼</span>
+            </button>
+            <div class="accordion-panel">
+                <div class="accordion-content"> -->
+            <h1 class="section-title">Daily Prayers</h1>
+             <div class="content-block" style="border-top: 4px solid var(--daily-color); background: #f0f7ff;">
+                <!-- <h3 class="block-title">Morning</h3> -->
+               
+            <button class="accordion-header prayer-text" onclick="toggleAccordion(this)">
+                Morning Offering<span>▼</span>
+            </button>
+            <div class="accordion-panel">
+                <div class="accordion-content prayer-text">
+                    <p>
+                      O my Jesus  through the most pure heart of mary, I offer to you all my prayers, actions, 
+                      joys and sufferings of this day for all the intentions of your divine heart. Amen. <br>
+                      O my Lady and my Mother, I offer myself entirely to you, and in proof of my filial affection 
+                      I concentrate to you this day my eyes, my ears, my tongue, my heart; in a word my whole self. 
+                      Now that I am entirely yours keep me and defend me, as your own property and possession
+                    </p>
+                    </div>
+            </div>
+
+            <button class="accordion-header prayer-text" onclick="toggleAccordion(this)">
+                The Angelus (6:00 AM, 12:00 Noon & 6:00 PM)<span>▼</span>
+            </button>
+            <div class="accordion-panel">
+                <div class="accordion-content prayer-text">
+                    <p >
+                    <strong>V: </strong>The Angel of the Lord declared unto Mary,
+                    <span class="response"><strong>R: </strong>And she conceived of the Holy Spirit.</span>
+                    </p>
+
+                    <p >
+                    <strong>V: </strong>Behold the handmaid of the Lord.
+                    <span class="response"><strong>R: </strong>Be it done unto me according to Thy word.</span>
+                    </p>
+
+                    <p >
+                    <strong>V: </strong>And the Word was made flesh.
+                    <span class="response"><strong>R: </strong>And dwelt among us.</span>
+                    </p>
+
+                    <p >
+                    <strong>V: </strong>Pray for us, O Holy Mother of God.
+                    <span class="response"><strong>R: </strong>That we may be made worthy of the promises of Christ.</span>
+                    </p><br>
+                    <p><strong>Let us pray:</strong> <br>
+                        Pour forth, we beseech Thee, O Lord, Thy grace into our hearts; 
+                        that, we, to whom the Incarnation of Christ, 
+                        Thy Son, was made known by the message of an Angel, 
+                        may by His Passion and Cross be brought to the glory of His Resurrection. 
+                        Through the same Christ our Lord. Amen.</p>
+                    </div>
+
+                    
+    
+            </div>
+
+            <button class="accordion-header prayer-text" onclick="toggleAccordion(this)">
+                Prayer to your Guardian Angel<span>▼</span>
+            </button>
+            <div class="accordion-panel">
+                <div class="accordion-content prayer-text">
+                    <p class="prayer-text">Angel of God, my guardian dear, to whom God’s love commits me here, 
+                        ever this day be at my side, to light and guard, to rule and guide. Amen.</p>
+                    </div>
+            </div>
+
+            <button class="accordion-header prayer-text" onclick="toggleAccordion(this)">
+                Prayer for peace (St. Francis)<span>▼</span>
+            </button>
+            <div class="accordion-panel">
+                <div class="accordion-content prayer-text">
+                    <p >
+                        Lord, make me an instrument of your peace.<br>
+                        Where there is hatred, let me sow love;<br>
+                        where there is injury, pardon;<br>
+                        where there is doubt, faith; <br>
+                        where there is despair, hope; <br>
+                        where there is darkness, light; <br>
+                        and where there is sadness, joy. <br><br>
+                        O Divine Master, grant that I may not so much seek to be consoled as to console; <br>
+                        to be understood as to understand; <br>
+                        to be loved as to love. <br><br>
+                        For it is in giving that we receive; <br>
+                        it is in pardoning that we are pardoned; <br>
+                        and it is in dying that we are born to eternal life. <br>Amen.
+                    </p>
+                    </div>
+            </div>
+
+            <button class="accordion-header prayer-text" onclick="toggleAccordion(this)">
+                The Grace (Before and after meals)<span>▼</span>
+            </button>
+            <div class="accordion-panel">
+                <div class="accordion-content prayer-text">
+                    <p ><i>Before</i><br>
+                        Bless us, O Lord, and these Thy gifts, which we are about to receive from Thy bounty, through Christ our Lord. Amen. <br><br>
+                        <i>After</i><br>
+                        We give you thanks, Almighty God, for this and all your benefits,who lives and reignes forever; Amen <br>May the souls of the faithful departed, through the mercy of God, rest in peace. Amen.
+                    </p>
+                    </div>
+            </div>
+
+            <button class="accordion-header prayer-text" onclick="toggleAccordion(this)">
+                Divine Mercy Devotion<span>▼</span>
+            </button>
+            <div class="accordion-panel">
+                <div class="accordion-content prayer-text">
+                    <p>
+                       <i style="color: #c0392b;">
+                        The message and devotion to the Divine Mercy 
+                        is based on the writings of Saint Maria Faustina Kowalska, 
+                        a polish nun who, in obedience to her spiritual director, 
+                        wrote a diary of over 600 pages recording the revelations
+                        she received about God's mercy. Even before her death in 1938,
+                        the devotion to the Divine Mercy had begun to spread.<br>
+                        The message of mercy is that God loves up -all of us- no matter how great our sins.
+                        He wants us to recognize that his mercy is greater than our sins, 
+                        so that we will call upon him with trust, receive his mercy, and let it flow 
+                        through us to others. Thus, all will come to share his joy.<br>
+                        Jesus said to Sister Faustina:<br>
+                        "Say unceasingly this chaplet that I have taught you. 
+                        Whoever will recite it will receive great mercy at the hour of death.
+                        Priests will recommend it to sinners as their last hope. Even the most hardened "
+                       </i> 
+                       <h3>Chaplet of The Divine Mercy</h3>
+                    </p>
+                    </div>
+            </div>
+
+            <button class="accordion-header prayer-text" onclick="toggleAccordion(this)">
+                Examination of conscience<span>▼</span>
+            </button>
+            <div class="accordion-panel">
+                <div class="accordion-content prayer-text">
+                    <p>
+                        <span class="response">Pending</span>
+                    </p>
+                    </div>
+            </div>
+            
+            <!-- <h1 class="section-title">Daily Rhythms</h1>
+             <div class="content-block" style="border-top: 8px solid var(--daily-color);">
+                <h3 class="block-title">Morning Offering</h3>
+                <p class="prayer-text">"O Jesus, through the Immaculate Heart of Mary, I offer You my prayers, works, joys, and sufferings of this day..."</p>
+            </div> --> 
+            
+        </section>
+
+        <section id="mass" class="prayer-section">
+            <h1 class="section-title">The Order of Mass</h1>
+            <div class="content-block" style="border-top: 8px solid var(--liturgy-color);">
+                <h3 class="block-title">INTRODUCTORY RITES</h3>
+                <p class="prayer-text">
+                    In the name of The Father, and of The Son, and of The Holy Spirit.
+                    <span class="response">Amen.</span>
+                </p>
+            </div>
+            <div class="content-block" style="border-top: 8px solid var(--liturgy-color);">
+                <p class="prayer-text">
+                    <strong>Priest: </strong>The grace of our Lord Jesus Christ, and the love of God, and the communion of the Holy Spirit be with you all. 
+                    <span class="response">People: And with your spirit.</span>
+                </p>
+
+                <p style="color: #c0392b;"><i>or</i></p>
+
+                <p class="prayer-text">
+                    <strong>Priest: </strong>Grace to you and peace from God our Father and the Lord Jesus Christ. 
+                    <span class="response">People: And with your spirit.</span>
+                </p>
+
+                <p style="color: #c0392b;"><i>or</i></p>
+
+                <p class="prayer-text">
+                    <strong>Priest: </strong>The Lord be with you.
+                    <span class="response">People: And with your spirit.</span>
+                </p>
+
+                
+            </div>
+
+            <div class="content-block" style="border-top: 8px solid var(--liturgy-color);">
+                <h3 class="block-title">PENITENTIAL RITE</h3>
+                <p style="color: #c0392b;"><i>The priest invites people to repent their sins</i></p>
+                <p class="prayer-text"><strong>
+                    Brethren (brothers and sisters), let us acknowledge our sins, and so prepare ourselves to celebrate the sacred mysteries
+                </strong>
+                </p>
+                <p style="color: #c0392b;"><i>After a brief silence, all say</i></p>
+                <p class="prayer-text">
+                    I confess to almighty God 
+                    and to you, my brothers and sisters, 
+                    that I have greatly sinned, 
+                    in my thoughts and in my words, 
+                    in what I have done and in what I have 
+                    failed to do,</p>
+                <p style="color: #c0392b;"><i>striking breast 3 times</i></p>
+                <p class="prayer-text">
+                    through my fault, through my fault, 
+                    through my most grievous fault; 
+                    therefore I ask blessed Mary ever-Virgin, 
+                    all the Angels and Saints, 
+                    and you, my brothers and sisters, 
+                    to pray for me to the Lord our God.
+                </p>
+                <p style="color: #c0392b;"><i>The Priest adds:</i></p>
+
+                <p class="prayer-text">
+                    <strong>Priest: </strong>May Almighty God have mercy o us, forgive us our sins, and bring us to everlasting life.
+                    <span class="response"><strong>People: </strong> Amen.</span>
+                </p>
+                <hr style=" border-top: 2px solid; color: #c0392b;">
+                <p style="color: #c0392b;"><i>or</i></p>
+
+                <p class="prayer-text"><strong>
+                    Brethren (brothers and sisters), let us acknowledge our sins, and so prepare ourselves to celebrate the sacred mysteries
+                </strong>
+                </p>
+
+                <p class="prayer-text">
+                    <strong>Priest: </strong>Have mercy on us, O Lord. 
+                    <span class="response">People: For we have sinned against you.</span>
+
+                    <strong>Priest: </strong>Show us, O Lord, your mercy. 
+                    <span class="response">People: And grant us your salvation.</span>
+
+                    <strong>Priest: </strong>May almighty God have mercy on us, forgive us our sins, and bring us to everlasting life. 
+                    <span class="response">People: Amen.</span>
+                </p>
+
+                <hr style=" border-top: 2px solid; color: #c0392b;">
+                <p style="color: #c0392b;"><i>or</i></p>
+
+                <p class="prayer-text"><strong>
+                    Brethren (brothers and sisters), let us acknowledge our sins, and so prepare ourselves to celebrate the sacred mysteries
+                </strong>
+                </p>
+
+                <p class="prayer-text">
+                    <strong>Priest: </strong>You were sent to heal the contrite of heart: Lord, have mercy. 
+                    <span class="response">People: Lord, have mercy.</span>
+
+                    <strong>Priest: </strong>You came to call sinners: Christ, have mercy. 
+                    <span class="response">People: Christ, have mercy.</span>
+
+                    <strong>Priest: </strong>You are seated at the right hand of the Father to intercede for us: Lord, have mercy. 
+                    <span class="response">People: Lord, have mercy.</span>
+                </p>
+
+                <p style="color: #c0392b;"><i>The priest adds:</i></p>
+
+                <p class="prayer-text"><strong>
+                    May almighty God have mercy on us, forgive us our sins and bring us to everlasting life
+                    </strong>
+                    <span class="response">People: Amen.</span>
+                </p>
+
+            </div>
+
+            <div class="content-block" style="border-top: 8px solid var(--liturgy-color);">
+                <h3 class="block-title">KYRIE</h3>
+                <p style="color: #c0392b;"><i>The Kyrie (Lord, have mercy) invocations follow only if Option 1 is used</i></p>
+                <p class="prayer-text">
+                    Priest: Lord, have mercy.<br>
+                    <span class="response">People: Lord, have mercy.</span>
+
+                    Priest: Christ, have mercy.<br>
+                    <span class="response">People: Christ, have mercy.</span>
+
+                    Priest: Lord, have mercy.<br>
+                    <span class="response">People: Lord, have mercy.</span>
+                </p>
+            </div>
+
+            <div class="content-block" style="border-top: 8px solid var(--liturgy-color);">
+                <h3 class="block-title">THE GLORIA</h3>
+                <p class="prayer-text">
+                    Glory to God in the highest, and on earth peace to people of good will.
+                    We praise you, we bless you, we adore you,we glorify you, 
+                    we give you thanks for your great glory, Lord God, heavenly King, O God, almighty Father. 
+                    Lord Jesus Christ, Only Begotten Son, Lord God, Lamb of God, Son of the Father, 
+                    you take away the sins of the world, have mercy on us; 
+                    you take away the sins of the world, receive our prayer; 
+                    you are seated at the right hand of the Father, have mercy on us. 
+                    For you alone are the Holy One, you alone are the Lord, you alone are the Most High,
+                    Jesus Christ, with the Holy Spirit, in the glory of God the Father.Amen.<br>
+                </p>
+
+                <p class="prayer-text">
+                    <strong>Let us pray.</strong>
+                </p>
+                    <p style="color: #c0392b;"><i>The priest says the opening prayer and all answer:</i></p>
+                    <span class="response">Amen.</span>
+            </div>
+
+            <div class="content-block" style="border-top: 8px solid var(--liturgy-color);">
+                <h3 class="block-title">LITURGY OF THE WORD</h3>
+                <p style="color: #c0392b;"><i>The reader goes to the lectern for the first reading. At the end of which the reader says:</i></p>
+                <p class="prayer-text">
+                    Reader: The Word of the Lord.
+                    <span class="response">People: Thanks be to God.</span>
+                </p>
+
+                <p style="color: #c0392b;"><i>Then follows the Responsorial Psalm and the people make the Response; <br>if there is a second reading,
+                    it ends as before:</i></p>
+
+                <p class="prayer-text">
+                    Reader: The Word of the Lord.
+                    <span class="response">People: Thanks be to God.</span>
+                </p>
+
+                 <p style="color: #c0392b;"><i>The Alleluia or another chant may now follow. The people stand.</i></p>
+                
+                <p><i style="color: #c0392b;">The priest then bows before the alter and silently says:</i><br>
+                    <i>Cleanse my heart and my lips, almighty God, that I may worthily proclaim your Holy Gospel</i>
+                </p>
+
+                <p class="prayer-text">
+                    The Lord be with you.
+                    <span class="response">And with your spirit.</span>
+
+                    A reading from the Holy Gospel according to <strong style="color: #c0392b;">N</strong>.
+                    <span class="response">Glory to you, O Lord.</span>
+                </p>
+
+                <p style="color: #c0392b;"><i>At the end of the Gospel, the priest says:</i></p>
+                
+                <p class="prayer-text">
+                    The Gospel of the Lord.
+                    <span class="response">Praise to you, Lord Jesus Christ.</span>
+                </p>
+
+                <p><i style="color: #c0392b;">The priest kisses the book and says silently:</i><br><i>Through the words of the Gospel may our sins 
+                    be wiped away.</i>
+                </p>
+                
+                <p><i style="color: #c0392b;">A homily follows on all Sundays and holy days of obligation. The people sit. <br><br>
+                    When the homily is ended, the profession of faith is made, when prescribed. <br> The people stand.</i>
+                </p>
+            </div>
+
+            <div class="content-block" style="border-top: 8px solid var(--liturgy-color);">
+                <h3 class="block-title">    PROFESSION OF FAITH</h3>
+                <p class="prayer-text">
+                    I believe in one God, the Father almighty, maker of heaven and earth, of all things visible and invisible.
+                    I believe in one Lord Jesus Christ, the Only Begotten Son of God, born of the Father before all ages.
+                    God from God, Light from Light, true God from true God, begotten, not made, consubstantial with the Father;
+                    through him all things were made. For us men and for our salvation he came down from heaven, <br>
+                    <i style="color: #c0392b;">At the words that follow, up to and including "...and became man.", all bow</i><br>
+                    and by the Holy Spirit was incarnate of the Virgin Mary, and became man.<br>
+                    For our sake he was crucified under Pontius Pilate, he suffered death and was buried, and rose again on the third day 
+                    in accordance with the Scriptures. He ascended into heaven and is seated at the right hand of the Father. 
+                    He will come again in glory to judge the living and the dead and his kingdom will have no end. 
+                    I believe in the Holy Spirit, the Lord, the giver of life, who proceeds from the Father and the Son, 
+                    who with the Father and the Son is adored and glorified, who has spoken through the prophets.
+                    I believe in one, holy, catholic and apostolic Church. 
+                    I confess one Baptism for the forgiveness of sins and I look forward to the resurrection of the dead and the 
+                    life of the world to come. Amen
+                </p>
+
+                <hr style=" border-top: 2px solid; color: #c0392b;">
+                <p style="color: #c0392b;"><i>or</i></p>
+                <i style="color: #c0392b;">The Apostle's Creed may be recited during the Lent and Easter Seasons:</i>
+                <p>I believe in God, the Father almighty, Creator of heaven and earth, and in Jesus Christ, his only Son, our Lord, <br><br>
+                    <i style="color: #c0392b;">At the words that follow, up to and including "...the Virgin Mary,", all bow.</i><br>
+                    who was conceived by the Holy Spirit, born of the Virgin Mary, <br>
+                    suffered under Pontius Pilate, was crucified, died and was buried; he descended into hell;
+                    on the third day he rose again from the dead; he ascended into heaven, and is seated at the right hand 
+                    of God the Father almighty; from there he will come to judge the living and the dead. 
+                    I believe in the Holy Spirit, the holy catholic Church, the communion of saints, the forgiveness of sins, 
+                    the resurrection of the body, and life everlasting. Amen.
+                </p>
+                
+                <I style="color: #c0392b;">Prayers of the faithful</I>
+            </div>
+
+            <h3 class="section-title">Liturgy of The Eucharist</h3>
+
+
+            <div class="content-block" style="border-top: 8px solid var(--liturgy-color);">
+                <h3 class="block-title">OFFERTORY</h3>
+                <p style="color: #c0392b;"><i>The priest, standing at the altar, 
+                    takes the paten with the bread, and holding it slightly raised above the altar, says: <br>
+                    (If singing is in progress, the responses are omitted)</i></p>
+                <p class="prayer-text">
+                 <strong>Blessed are you, Lord God of all creation, for through your goodness we have received the bread we offer you:
+                    fruit of the earth and work of human hands, it will become for us the bread of life.</strong></p>
+                    <span class="response">Blessed be God forever.</span>
+                
+                <p class="prayer-text"><I style="color: #c0392b;"> The priest pours wine and a little water into the chalice, saying silently:</I><br>
+                By the mysteries of this water and wine, may we come to share in the divinity of Christ, 
+                    who humbled himself to share in our humanity.</p>
+                    
+                <p class="prayer-text"><i style="color: #c0392b;">Then he takes the chalice and raises it a little above the altar saying:</i><br>
+                 <strong>Blessed are you, Lord God of all creation, for through your goodness we have received the wine we offer you:
+                    fruit of the vine and work of human hands, it will become our spiritual drink.</strong></p>
+                    <span class="response">Blessed be God forever.</span>
+
+                <p class="prayer-text"><I style="color: #c0392b;"> The priest bows and says silently:</I><br>
+                With humble spirit and contrite heart, may we be accepted by you, O Lord, and may our sacrifice in 
+                your sight this day be pleasing to you, Lord God.</p>
+
+                <p class="prayer-text"><I style="color: #c0392b;"> The priest then washes his hands at the side of the altar, saying silently:</I><br>
+                Wash me, O Lord, from my iniquity and cleanse me from my sin</p>
+
+                <p class="prayer-text"><i style="color: #c0392b;">At the center of the altar, facing the people, the priest says:</i><br>
+                 <strong>Pray, Brethren (brothers and sisters), that my sacrifice and yours may be acceptable to God, the almighty Father.</strong>
+
+                    <span class="response">May the Lord accept the sacrifice at your hands for the praise and glory of his name, for our good, and the good of all his holy church.</span></p>
+
+                <i style="color: #c0392b;"> The priest then recites the Prayer over the gifts. At the end of the prayer the people answer:</i>
+                <p class="prayer-text">Amen.</p>
+
+            </div>
+        </section>
+
+        <section id="rosary" class="prayer-section">
+            <h1 class="section-title">The Holy Rosary</h1>
+            <div class="content-block" style="border-top: 8px solid var(--devotion-color);">
+                <p class="prayer-text"><strong>The Sign of the Cross:</strong><br/>In the name of the Father, and of the Son, and of the Holy Spirit.</p>
+                <h3 class="block-title">THE APOSTLES CREED</h3>
+                <p class="prayer-text">
+                    I believe in God,
+                    the Father almighty,
+                    Creator of heaven and earth,
+                    and in Jesus Christ, his only Son, our Lord,
+                    who was conceived by the Holy Spirit,
+                    born of the Virgin Mary,
+                    suffered under Pontius Pilate,
+                    was crucified, died and was buried;
+                    he descended into hell;
+                    on the third day he rose again from the dead;
+                    he ascended into heaven,
+                    and is seated at the right hand of God the Father almighty;
+                    He will come to judge the living and the dead.<br>
+                    I believe in the Holy Spirit,
+                    the holy catholic Church,
+                    the communion of saints,
+                    the forgiveness of sins,
+                    the resurrection of the body,
+                    and life everlasting.</p>
+                    <p class="center-me prayer-text">Amen</p>
+                
+            </div>
+            <div class="content-blocks" style="border-top: 4px solid var(--devotion-color); background: #f0f7ff;">
+                <p class="prayer-text"><i>Recite three sets</i> <br>
+                    Our Father... <br>
+                    Hail Marys... <br>
+                    Glory Be... <br></p>
+            </div>
+            <div class="content-blocks" style="border-top: 4px solid var(--devotion-color); background: #f0f7ff;">
+                <p class="prayer-text"><i>Spiritual Communion:</i> I wish, Lord to receive you with the purity, 
+                    humility and devotion with which your most Holy Mother received you: 
+                    with the spirit and fervour of the Saints</p>
+                <p class="prayer-text"> In the name of the Father, and of the Son, 
+                    and of the Holy Spirit. Amen </p>
+            </div>
+            <div class="content-blocks" style="border-top: 4px solid var(--devotion-color); background: #f0f7ff;">
+                <p class="prayer-text"></p>
+                <span class="response"></span>
+                <p class="prayer-text" style="margin-bottom: 0px; padding-bottom: 0px;"> Lord, open my lips;</p>
+                <p class="response"> And my mouth will proclaim your praise.</p>
+                <p class="prayer-text" style="margin-bottom: 0px; padding-bottom: 0px;"> God, come to my assistance;</p>
+                <span class="response"> Lord, make haste to help me.</span>
+                <p class="prayer-text"> Glory be...</p>
+            </div>
+            <div class="content-block" style="border-top: 4px solid var(--devotion-color); background: #f0f7ff;">
+                <h3 class="block-title">The Five Mysteries</h3>
+                
+            <button class="accordion-header prayer-text" onclick="toggleAccordion(this)">
+                Joyful Mysteries <i>(Monday, Saturday)</i><span>▼</span>
+            </button>
+            <div class="accordion-panel">
+                <div class="accordion-content">
+                    
+                    <button class="sub-accordion-header prayer-text" onclick="toggleSubAccordion(this)">
+                        1. The Annunciation <span>▼</span>
+                    </button>
+                    <div class="sub-accordion-panel">
+                        <p class="sub-content">
+                            <span class="response">Pending</span> 
+                        </p>
+                    </div>
+
+                    <button class="sub-accordion-header prayer-text" onclick="toggleSubAccordion(this)">
+                        2. The Visitation <span>▼</span>
+                    </button>
+                    <div class="sub-accordion-panel">
+                        <p class="sub-content">
+                           <span class="response">Pending</span> 
+                        </p>
+                    </div>
+
+                     <button class="sub-accordion-header prayer-text" onclick="toggleSubAccordion(this)">
+                        3. The Birth of Our Lord in Bethlehem <span>▼</span>
+                    </button>
+                    <div class="sub-accordion-panel">
+                        <p class="sub-content">
+                          <span class="response">Pending</span> 
+                        </p>
+                    </div>
+
+                     <button class="sub-accordion-header prayer-text" onclick="toggleSubAccordion(this)">
+                        4. The Presentation in the Temple <span>▼</span>
+                    </button>
+                    <div class="sub-accordion-panel">
+                        <p class="sub-content">
+                            <span class="response">Pending</span> 
+                        </p>
+                    </div>
+
+                     <button class="sub-accordion-header prayer-text" onclick="toggleSubAccordion(this)">
+                        5. The Finding of the Child Jesus in the Temple <span>▼</span>
+                    </button>
+                    <div class="sub-accordion-panel">
+                        <p class="sub-content">
+                            <span class="response">Pending</span> 
+                        </p>
+                    </div>
+                    <p class="prayer-text response"><i>O my Jesus, forgive us our sins, save us from the fires of 
+                        Hell, lead all souls into heaven, especially those most in need of your mercy</i></p>
+
+                </div>
+            </div>
+
+
+
+             <button class="accordion-header prayer-text" onclick="toggleAccordion(this)">
+                Mysteries of Light <i>(Thursday)</i><span>▼</span>
+            </button>
+            <div class="accordion-panel">
+                <div class="accordion-content">
+                    
+                    <button class="sub-accordion-header prayer-text" onclick="toggleSubAccordion(this)">
+                        1. The Baptism of Our Lord <span>▼</span>
+                    </button>
+                    <div class="sub-accordion-panel">
+                        <p class="sub-content">
+                            <span class="response">Pending</span> 
+                        </p>
+                    </div>
+
+                    <button class="sub-accordion-header prayer-text" onclick="toggleSubAccordion(this)">
+                        2. The Wedding Feast at Cana <span>▼</span>
+                    </button>
+                    <div class="sub-accordion-panel">
+                        <p class="sub-content">
+                            <span class="response">Pending</span> 
+                        </p>
+                    </div>
+
+                     <button class="sub-accordion-header prayer-text" onclick="toggleSubAccordion(this)">
+                        3. The Proclamation of the Kingdom of God <span>▼</span>
+                    </button>
+                    <div class="sub-accordion-panel">
+                        <p class="sub-content">
+                            <span class="response">Pending</span> 
+                        </p>
+                    </div>
+
+                     <button class="sub-accordion-header prayer-text" onclick="toggleSubAccordion(this)">
+                        4. The Transfiguration <span>▼</span>
+                    </button>
+                    <div class="sub-accordion-panel">
+                        <p class="sub-content">
+                            <span class="response">Pending</span> 
+                        </p>
+                    </div>
+
+                     <button class="sub-accordion-header prayer-text" onclick="toggleSubAccordion(this)">
+                        5. The institution of the Eucharist <span>▼</span>
+                    </button>
+                    <div class="sub-accordion-panel">
+                        <p class="sub-content">
+                            <span class="response">Pending</span> 
+                        </p>
+                    </div>
+
+                    <p class="prayer-text response"><i>O my Jesus, forgive us our sins, save us from the fires of 
+                        Hell, lead all souls into heaven, especially those most in need of your mercy</i></p>
+
+                </div>
+            </div>
+
+
+             <button class="accordion-header prayer-text" onclick="toggleAccordion(this)">
+                Sorrowful Mysteries <i>(Tuesday, Friday)</i><span>▼</span>
+            </button>
+            <div class="accordion-panel">
+                <div class="accordion-content">
+                    
+                    <button class="sub-accordion-header prayer-text" onclick="toggleSubAccordion(this)">
+                        1. The Agony in the Garden <span>▼</span>
+                    </button>
+                    <div class="sub-accordion-panel">
+                        <p class="sub-content">
+                          <span class="response">Pending</span> 
+                        </p>
+                    </div>
+
+                    <button class="sub-accordion-header prayer-text" onclick="toggleSubAccordion(this)">
+                        2. The Scourging at the Pillar <span>▼</span>
+                    </button>
+                    <div class="sub-accordion-panel">
+                        <p class="sub-content">
+                           <span class="response">Pending</span> 
+                        </p>
+                    </div>
+
+                     <button class="sub-accordion-header prayer-text" onclick="toggleSubAccordion(this)">
+                        3. The Crowning with Thorns <span>▼</span>
+                    </button>
+                    <div class="sub-accordion-panel">
+                        <p class="sub-content">
+                            <span class="response">Pending</span>
+                        </p>
+                    </div>
+
+                     <button class="sub-accordion-header prayer-text" onclick="toggleSubAccordion(this)">
+                        4. Carrying of the Cross <span>▼</span>
+                    </button>
+                    <div class="sub-accordion-panel">
+                        <p class="sub-content">
+                            <span class="response">Pending</span>
+                        </p>
+                    </div>
+
+                     <button class="sub-accordion-header prayer-text" onclick="toggleSubAccordion(this)">
+                        5. The Crucifixion and Death of Our Lord <span>▼</span>
+                    </button>
+                    <div class="sub-accordion-panel">
+                        <p class="sub-content">
+                            <span class="response">Pending</span>
+                        </p>
+                    </div>
+                    <p class="prayer-text response"><i>O my Jesus, forgive us our sins, save us from the fires of 
+                        Hell, lead all souls into heaven, especially those most in need of your mercy</i></p>
+
+                </div>
+            </div>
+
+
+             <button class="accordion-header prayer-text" onclick="toggleAccordion(this)">
+                Glorious Mysteries <i>(Wednesday, Sunday)</i><span>▼</span>
+            </button>
+            <div class="accordion-panel">
+                <div class="accordion-content">
+                    
+                    <button class="sub-accordion-header prayer-text" onclick="toggleSubAccordion(this)">
+                        1. The Resurrection of Our Lord<span>▼</span>
+                    </button>
+                    <div class="sub-accordion-panel">
+                        <p class="sub-content">
+                          <span class="response">Pending</span> 
+                        </p>
+                    </div>
+
+                    <button class="sub-accordion-header prayer-text" onclick="toggleSubAccordion(this)">
+                        2. The Ascention of Christ into Heaven <span>▼</span>
+                    </button>
+                    <div class="sub-accordion-panel">
+                        <p class="sub-content">
+                            <span class="response">Pending</span>
+                        </p>
+                    </div>
+
+                     <button class="sub-accordion-header prayer-text" onclick="toggleSubAccordion(this)">
+                        3. The Descent of the Holy Spirit on the Apostles <span>▼</span>
+                    </button>
+                    <div class="sub-accordion-panel">
+                        <p class="sub-content">
+                            <span class="response">Pending</span>
+                        </p>
+                    </div>
+
+                     <button class="sub-accordion-header prayer-text" onclick="toggleSubAccordion(this)">
+                        4. The Assumption of the Blessed Virgin Mary into Heaven <span>▼</span>
+                    </button>
+                    <div class="sub-accordion-panel">
+                        <p class="sub-content">
+                            <span class="response">Pending</span>
+                        </p>
+                    </div>
+
+                     <button class="sub-accordion-header prayer-text" onclick="toggleSubAccordion(this)">
+                        5. The Crowning of the Blessed Virgin Mary in Heaven <span>▼</span>
+                    </button>
+                    <div class="sub-accordion-panel">
+                        <p class="sub-content">
+                            <span class="response">Pending</span>
+                        </p>
+                    </div>
+
+                    <p class="prayer-text response"><i>O my Jesus, forgive us our sins, save us from the fires of 
+                        Hell, lead all souls into heaven, especially those most in need of your mercy</i></p>
+
+                </div>
+            </div>
+            </div>
+
+
+            <div class="content-block" style="border-top: 4px solid var(--devotion-color); background: #f0f7ff;">
+                <h3 class="block-title">LITANY OF THE BLESSED VIRGIN MARY</h3>
+                <div class="litany-grid prayer-text">
+                    <div>Lord, have mercy on us,</div> <div class="response">Lord, have mercy on us.</div>
+                    <div>Christ, have mercy on us,</div> <div class="response">Christ, have mercy on us.</div>
+                    <div>Lord, have mercy on us,</div> <div class="response">Lord, have mercy on us.</div>
+                </div><br>
+
+                <div class="litany-grid prayer-text">
+                    <div>God the Father of Heaven</div> <div class="response">Have mercy on us.</div>
+                    <div>God the Son, Redeemer of the World</div> <div class="response">Have mercy on us.</div>
+                    <div>God the Holy Spirit</div> <div class="response">Have mercy on us.</div>
+                    <div>Holy Trinity, One God</div> <div class="response">Have mercy on us.</div>
+                </div>
+ 
+                <div class="litany-grid prayer-text">
+                    <div>Holy Mary,</div> <div class="response">Pray for us.</div>
+                    <div>Holy Mother of God,</div> <div class="response">Pray for us.</div>
+                    <div>Holy Virgin of virgins</div> <div class="response">Pray for us.</div>
+                    <div>Mother of Christ</div> <div class="response">Pray for us.</div>
+                    <div>Mother of the Church</div> <div class="response">Pray for us.</div>
+                    <div>Mother of Mercy</div> <div class="response">Pray for us.</div>
+                    <div>Mother of Divine Grace</div> <div class="response">Pray for us.</div>
+                    <div>Mother of Hope</div> <div class="response">Pray for us.</div>
+                    <div>Mother most pure</div> <div class="response">Pray for us.</div>
+                    <div>Mother most chaste</div> <div class="response">Pray for us.</div>
+                    <div>Mother inviolate</div> <div class="response">Pray for us.</div>
+                    <div>Mother undefiled</div> <div class="response">Pray for us.</div>
+                    <div>Mother most Lovable</div> <div class="response">Pray for us.</div>
+                    <div>Mother most admirable</div> <div class="response">Pray for us.</div>
+                    <div>Mother of good counsel</div> <div class="response">Pray for us.</div>
+                    <div>Mother of our Creator</div> <div class="response">Pray for us.</div>
+                    <div>Mother of our Savior</div> <div class="response">Pray for us.</div>
+                    <div>Virgin most prudent</div> <div class="response">Pray for us.</div>
+                    <div>Virgin most venerable</div> <div class="response">Pray for us.</div>
+                    <div>Virgin most renowned</div> <div class="response">Pray for us.</div>
+                    <div>Virgin most powerful</div> <div class="response">Pray for us.</div>
+                    <div>Virgin most merciful</div> <div class="response">Pray for us.</div>
+                    <div>Virgin most faithful</div> <div class="response">Pray for us.</div>
+                    <div>Mirror of justice</div> <div class="response">Pray for us.</div>
+                    <div>Seat of wisdom</div> <div class="response">Pray for us.</div>
+                    <div>Cause of our joy</div> <div class="response">Pray for us.</div>
+                    <div>Spiritual vessel</div> <div class="response">Pray for us.</div>
+                    <div>Vessel of honour</div> <div class="response">Pray for us.</div>
+                    <div>Singular vessel of devotion</div> <div class="response">Pray for us.</div>
+                    <div>Mystical rose</div> <div class="response">Pray for us.</div>
+                    <div>Tower of David</div> <div class="response">Pray for us.</div>
+                    <div>Tower of ivory</div> <div class="response">Pray for us.</div>
+                    <div>House of gold</div> <div class="response">Pray for us.</div>
+                    <div>Ark of the covenant</div> <div class="response">Pray for us.</div>
+                    <div>Gate of heaven</div> <div class="response">Pray for us.</div>
+                    <div>Morning star</div> <div class="response">Pray for us.</div>
+                    <div>Health of the sick</div> <div class="response">Pray for us.</div>
+                    <div>Refuge of sinners</div> <div class="response">Pray for us.</div>
+                    <div>Comfort of migrants</div> <div class="response">Pray for us.</div>
+                    <div>Comfort of the afflicted</div> <div class="response">Pray for us.</div>
+                    <div>Help of Christians</div> <div class="response">Pray for us.</div>
+                    <div>Queen of Angels</div> <div class="response">Pray for us.</div>
+                    <div>Queen of Patriarchs</div> <div class="response">Pray for us.</div>
+                    <div>Queen of Prophets</div> <div class="response">Pray for us.</div>
+                    <div>Queen of Apostles</div> <div class="response">Pray for us.</div>
+                    <div>Queen of Martyrs</div> <div class="response">Pray for us.</div>
+                    <div>Queen of Confessors</div> <div class="response">Pray for us.</div>
+                    <div>Queen of Virgins</div> <div class="response">Pray for us.</div>
+                    <div>Queen of all Saints</div> <div class="response">Pray for us.</div>
+                    <div>Queen conceived without original sin</div> <div class="response">Pray for us.</div>
+                    <div>Queen taken up into Heaven</div> <div class="response">Pray for us.</div>
+                    <div>Queen of the most Holy Rosary</div> <div class="response">Pray for us.</div>
+                    <div>Queen of the family</div> <div class="response">Pray for us.</div>
+                    <div>Queen of peace</div> <div class="response">Pray for us.</div>
+                    
+                </div><br><br>
+            </div>
+
+                <div class="prayer-text content-block" style="background: #f0f7ff;">
+                    <div>
+                        <div>Lamb of God, you take away the sins of the world;</div> <div class="response">Spare us, O Lord.</div>
+                        <div>Lamb of God, you take away the sins of the world;</div> <div class="response">Graciously hear us, O Lord.</div>
+                        <div>Lamb of God, you take away the sins of the world;</div> <div class="response">Have mercy on us.</div>
+                    </div>
+
+                        <P><strong>Prayer: </strong>We fly to your patronage, O Holy Mother of God. Despise not our petitions in our necessities, 
+                        but deliver us from all dangers, O ever glorious and Blessed Virgin</P>
+                </div>
+
+                <div class="prayer-text content-block" style="background: #f0f7ff;">
+                    <div>
+                        <div>Pray for us, O Holy Mother of God.</div> <div class="response">That we may be made worthy of the promises of Christ.</div>
+
+                    </div>
+
+                        <P><strong>Let us pray: </strong>Pour forth, we beseech you, O Lord, your grace into our hearts, that we, 
+                            to whom the Incarnation of Christ, your Son, was made known by the message of an Angel, 
+                            may by His Passion and Cross be brought to the glory of his Resurrection. 
+                            through the same Christ our Lord.<br><strong> Amen.</strong></P>
+                </div>                
+                
+                <div class="prayer-text content-block" style="background: #f0f7ff;">
+                    <div>For the needs of the Church and the state:</div> <div class="response"><i>(Our Father... Hail Mary... Glory be...)x1</i></div>
+                    <div>For Our Holy Father, The pope, and his intentions:</div> <div class="response"><i>(Our Father... Hail Mary... Glory be...)x1</i></div>
+                    <div>For the Archbishop (Bishop) of this Diocese and his intentions:</div> <div class="response"><i>(Our Father... Hail Mary... Glory be...)x1</i></div>
+                    <div style="color: #c0392b;"><i>(any other intentions here)</i></div><br>
+                    <div>For the holy Souls in Purgatory:</div> <div class="response">(Our Father... Hail Mary...)x1</div>
+                    <div>May they rest in peace. Amen</div>
+                </div>
+
+                <div class="prayer-text content-block" style="background: #f0f7ff;">
+                    <p>
+                    Hail, Holy Queen, Mother of Mercy, Hail, our life, our sweetness and our hope. To you do we cry, poor banished children of Eve.
+                    To you do we send up our sighs, mourning and weeping in this valley of tears.
+                    Turn then, most gracious advocate, your eyes of mercy toward us, and after this our exile
+                    show unto us the blessed fruit of your womb, Jesus.
+                    O clement, O loving, O sweet Virgin Mary.</p>
+                    
+                    <div>Pray for us, O Holy Mother of God.</div> <div class="response">That we may be made worthy of the promises of Christ.</div>
+
+                    <p><strong>Let us pray: </strong>O God, Whose Only Begotten Son, by His life, death and resurrection,
+                    has purchased for us the rewards of eternal life: grant, we beseech
+                    Thee, that by meditating upon these mysteries of the most holy Rosary
+                    of the Blessed Virgin Mary, we may imitate what they contain, and
+                    obtain what they promise, through the same Christ our Lord. <strong> Amen.</strong>
+                </p>
+
+                 <p class="prayer-text" style="font-size: 1.1em;"><strong> 
+                    In the Name of The Father, and of The Son, and of The Holy Spirit. Amen</strong></p>
+                </div>                 
+        </section>
+
+        <section id="marian" class="prayer-section">
+            <h1 class="section-title">Marian Prayers</h1>
+            <div class="content-block" style="border-top: 8px solid var(--devotion-color);">
+                <h3 class="block-title">The Hail Mary <i>(Ave Maria)</i></h3>
+                <p class="prayer-text">
+                    Hail Mary, full of grace, the Lord is with thee; 
+                    blessed art thou among women, and blessed is the fruit of thy womb, Jesus.<br>
+                    Holy Mary, Mother of God, pray for us sinners, now and at the hour of our death. Amen
+                </p>
+
+                <h3 class="block-title">The Hail Holy Queen <i>(Salve Regina)</i></h3>
+                <p class="prayer-text">
+                    Hail, Holy Queen, Mother of Mercy, Hail, our life, our sweetness and our hope. To you do we cry, poor banished children of Eve.
+                    To you do we send up our sighs, mourning and weeping in this valley of tears.
+                    Turn then, most gracious advocate, your eyes of mercy toward us, and after this our exile
+                    show unto us the blessed fruit of your womb, Jesus.
+                    O clement, O loving, O sweet Virgin Mary.<br>
+                </p>
+
+                <h3 class="block-title">The Memorare</h3>
+                <p class="prayer-text">
+                    Remember, O most gracious Virgin Mary, that never was it known that anyone who fled to your protection, 
+                    implored your help, or sought your intercession was left unaided. Inspired by this confidence, I fly unto you, 
+                    O Virgin of virgins, my Mother; to you do I come, before you I stand, sinful and sorrowful. 
+                    O Mother of the Word Incarnate, despise not my petitions, but in your mercy hear and answer me. Amen
+                </p>
+
+                <h3 class="block-title">The Magnificat <i>(Canticle of Mary)</i></h3>
+                <p class="prayer-text">
+                    My soul proclaims the greatness of the Lord, my spirit rejoices in God my Savior; <br>
+                    for he has looked with favor on his lowly servant. From this day all generations will call me blessed: <br>
+                    the Almighty has done great things for me, and holy is his name. He has mercy on those who fear him in every generation. <br>
+                    He has shown strength with his arm; he has scattered the proud in their conceit. <br>
+                    He has cast down the mighty from their thrones, and has lifted up the lowly. <br>
+                    He has filled the hungry with good things, and the rich he has sent away empty. <br>
+                    He has helped his servant<br>
+                </p>
+            </div>
+        </section>
+
+        <section id="emergency" class="prayer-section">
+            <h1 class="section-title">Arrow Prayers</h1>
+            <div class="content-block" style="border-top: 8px solid #d63031;">
+                <span class="response">Pending</span>
+                <!-- <h3 class="block-title">Quick Strength</h3>
+                <p class="prayer-text">• <em>"Jesus, I trust in You."</em><br>• <em>"Lord, make haste to help me."</em></p> -->
+            </div>
+
+            
+        </section>
+
+    </main>
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(reg => console.log('✓ Offline access enabled'))
+                    .catch(err => console.log('✗ Offline setup failed', err));
+            });
+        }
+        // 1. Initialize the page state on load
+        window.onload = function() {
+            // Check if there is a saved section from a previous session
+            const savedSection = localStorage.getItem('currentSection');
+            
+            if (savedSection) {
+                // If found, open that section
+                showContent(savedSection);
+            } else {
+                // Default to welcome if it's the first time opening
+                showContent('welcome');
+            }
+        };
+
+        function showContent(sectionId) {
+            // 2. Save the sectionId to localStorage
+            localStorage.setItem('currentSection', sectionId);
+
+            const sections = document.querySelectorAll('.prayer-section');
+            const menuItems = document.querySelectorAll('.menu-item');
+            
+            // Hide all sections
+            sections.forEach(s => s.classList.remove('active'));
+            
+            // Deactivate all menu items
+            menuItems.forEach(item => item.classList.remove('active'));
+
+            // Show the selected section
+            const activeSection = document.getElementById(sectionId);
+            if (activeSection) {
+                activeSection.classList.add('active');
+            }
+
+            // Find and activate the corresponding menu item(s)
+            // We check both desktop and mobile menu items
+            menuItems.forEach(item => {
+                if (item.getAttribute('onclick').includes(`'${sectionId}'`)) {
+                    item.classList.add('active');
+                }
+            });
+
+            // Reset scroll to top of content area
+            document.querySelector('.main-content').scrollTop = 0;
+        }
+
+        function toggleAccordion(element) {
+            // 1. Get the panel directly after the clicked button
+            const panel = element.nextElementSibling;
+            
+            // 2. Close all other panels first (This creates the "Exclusive" behavior)
+            const allPanels = document.querySelectorAll('.accordion-panel');
+            const allHeaders = document.querySelectorAll('.accordion-header');
+            
+            allPanels.forEach((p) => {
+                if (p !== panel) {
+                    p.style.maxHeight = null;
+                }
+            });
+
+            // Reset all header spans
+            allHeaders.forEach((h) => {
+                h.querySelector('span').innerText = '+';
+            });
+
+            // 3. Toggle the clicked panel
+            if (panel.style.maxHeight) {
+                panel.style.maxHeight = null;
+                element.querySelector('span').innerText = '+';
+            } else {
+                // scrollHeight gives us the exact height the content needs
+                panel.style.maxHeight = panel.scrollHeight + "px";
+                element.querySelector('span').innerText = '-';
+            }
+        }
+
+        function toggleSubAccordion(element) {
+            const subPanel = element.nextElementSibling;
+            const parentPanel = element.closest('.accordion-panel'); // The "Joyful" container
+            
+            // Close other sub-panels in this group
+            const siblings = element.parentElement.querySelectorAll('.sub-accordion-panel');
+            siblings.forEach(s => {
+                if (s !== subPanel) s.style.maxHeight = null;
+            });
+
+            if (subPanel.style.maxHeight) {
+                subPanel.style.maxHeight = null;
+                element.querySelector('span').innerText = '▼';
+            } else {
+                subPanel.style.maxHeight = subPanel.scrollHeight + "px";
+                element.querySelector('span').innerText = '▲';
+                
+                // CRITICAL: Update the parent's height so it grows to fit the sub-content
+                parentPanel.style.maxHeight = (parentPanel.scrollHeight + subPanel.scrollHeight) + "px";
+            }
+        }
+    </script>
+</body>
+</html>
